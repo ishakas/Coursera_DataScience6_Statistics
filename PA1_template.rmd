@@ -1,0 +1,82 @@
+---
+title: "PA1_template.rmd"
+author: "ishaka"
+date: "10 November 2015"
+output: html_document
+---
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+
+
+#Loading and preprocessing the data
+Load the data from the csv file
+
+```{r}
+rawData <- read.csv("data/activity.csv")
+```
+
+
+Transforms the data into a format more suitable for analysis
+
+```{r}
+rawData$date <- as.Date(rawData$date)
+```
+
+# Mean total number of steps taken per day
+Calculate the total number of steps taken per day and save the results into a different data set "dailySummary"
+
+```{r}
+dailySummary <- aggregate(steps ~ date, rawData, sum)
+colnames(dailySummary) <- c("date", "steps")
+```
+
+Histogram plot of the number of steps taken each day. A histogram counts the frequency
+
+```{r}
+hist(dailySummary$steps, col = 'red', breaks = 20 )
+```
+
+The mean and median of the total number of steps taken per day are below
+```{r}
+mean(dailySummary$steps)
+median(dailySummary$steps)
+```
+
+
+
+# Average daily activity pattern
+
+Aggregate the pattern for a day and draw the plot
+```{r}
+dailyMean = aggregate(steps ~ interval, rawData, mean)
+```
+
+Draw the line plot to show the relationship
+```{r}
+
+plot(dailyMean$interval, dailyMean$steps, type = "l", xlab = "Interval", ylab = "Average Steps", main = "Average daily activity pattern")
+```
+
+Find the 5 minute interval, on average across all days which contains the maximum number of steps
+```{r}
+max <- dailyMean[dailyMean$steps==max(dailyMean$steps),]
+max
+```
+
+The 5 minute interval that gives the amount of steps is **`r max$interval`** with **`r max$step`** steps
+
+# Inputing missing values
+
+Calculate the number of missing values in the data set
+```{r}
+missingRows <- nrow(subset(rawData, is.na(rawData$steps)))
+missingRows
+```
+
+
+
+
