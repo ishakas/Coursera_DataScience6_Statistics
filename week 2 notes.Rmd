@@ -6,9 +6,9 @@ output: html_document
 ---
 
 # Important concepts
-some important concepts to remember:
-- Difference between *sample* and *population*. Due to real world limitations we will never be able to measure the whole population, we can only measure a sample of the population.
-- This means that we will never be able to measure the population mean and population variance. The population mean and population variance are just **theoretical values**
+Some important concepts to remember:  
+- Difference between **sample** and **population**. Due to real world limitations we will never be able to measure the whole population, we can only measure a sample of the population.  
+- This means that we will never be able to measure the population mean and population variance. The population mean and population variance are just **theoretical values**  
 
 ```{r}
 set.seed(1234)
@@ -169,7 +169,7 @@ We can see the the expected value of the distribution of mean is the same as the
 
 ## Variance of distribution of sample mean
 The variance for the distribution of sample mean can be expressed as 
-$Var(\bar X) = \sigma^2/n$  
+$$Var(\bar X) = \sigma^2/n$$  
 
 where:  
 - $\sigma^2$ is the variance of the distribution  
@@ -195,7 +195,7 @@ How about the variance of distribution for the ten thousand experiments?
 var(ten_thousand_means)
 ```
 
-Here we can see **the variance of the distribution of the sample means does change significantly how often we repeat the experiments if the number of samples is low**.
+Here we can see **the variance of the distribution of the sample means does not change significantly how often we repeat the experiments if the number of samples is low**.
 
 So let's see what happens if we increase the number of sample in our experiment from 5 bacteria to 100 bacteria.
 
@@ -235,6 +235,92 @@ The central limit theorem will only works in certain conditions though:
 - The underlying distribution must have a well-defined expected value and a well-defined variance  
 - The underlying distribution must have independent and identically distributed (iid) random variables  
 
+# Confidence Interval
+In a normal distribution the probability of event occuring mean + 1.96 SD is approx. 2.5%. Similarly the probablity of event occuring mean - 1.96 is approx 2.5* also.
+
+Combining them, the probability of an event occuring outside of 1.96 SD from the mean is approximately 5%. In other word there is a 95% probability that the event will occur within 1.96 ( or around 2) SD.
+
+Remember that for the distribution of mean ($\bar X$)  
+- mean  : $\mu$  
+- SD    : $\sigma/\sqrt{n}$
+
+So the probability of the $\bar X$ occuring within the middle 95% band is $$\mu \pm \frac{2\sigma}{\sqrt{n}}$$
+
+For example:
+```{r}
+library(UsingR) # you may need to install the package to your R
+data(father.son)
+
+# lets find the confidence interval for the average son height (in inches)
+x <- father.son$sheight
+n <- length(x)
+CI <- mean(x) + c(-1,1) * qnorm(0.975)* sd(x)/sqrt(n)
+
+# divide by 12 to convert inches to feet
+CI/12
+```
+
+### Wald confidence interval
+For Bernoulli distributions, $X_i$ is 0 or 1 with success probability $p$ and the variance is $\sigma^2 = p(1 - p)$
+* the confidence interval takes the form of $$\hat{p} \pm z_{1-\alpha/2}\sqrt{\frac{p(1-p)}{n}}$$
+
+* since the population proportion $p$ is unknown, we can use the sampled proportion of success $\hat{p} = X/n$ as estimate
+
+* $p(1-p)$ is largest when $p = 1/2$, so 95% confidence interval for $p$ can be estimated by  
+
+$$\begin{aligned}
+\hat{p} \pm Z_{0.95} \sqrt{\frac{0.5(1-0.5)}{n}} & = \hat{p} \pm qnorm(.975) \sqrt{\frac{1}{4n}}\\
+& = \hat{p} \pm 1.96 \sqrt{\frac{1}{4n}}\\
+& = \hat{p} \pm \frac{1.96}{2} \sqrt{\frac{1}{n}}\\
+& \approx \hat{p} \pm \frac{1}{\sqrt{n}}\\
+\end{aligned}$$
+
+For example:
+You are running for a political office. From a random sample of 100 voters, 56 are likely to vote for you. What is your confidence interval?
+
+```{r}
+#sample 
+n <- 100
+
+# p-hat (56 divide by 100)
+phat <- .56
+
+# 95% estimate is
+phat + c(-1,1) * 1/(sqrt(n))
+```
+
+Note that the lower estimate is less than 0.5, which means we cannot rule out possibilities below 0.5 with 95% confidence. So you are not save yet!
+
+Rough guidliness, you will need 100 samples for 1 decimal place accuracy, 10,000 for 2, and 1,000,000 for 3
+
+```{r}
+# You can also use another method to calculate the confidence interval for binomial distribution
+binom.test(56,100)$conf.int
+```
+
+### Poison interval
+How do we calculate CI for Poisson distribution?
+
+Say a nuclear pump fails 5 times out of 94.32 days, give a 95% CI for the failure rate per day.
+
+```{r}
+x <- 5
+t <- 94.32
+lambda <- x/t
+
+# calculate CI. Remember that for Poison interval: mean = lambda. and sample variance is lambda/t
+CI <- lambda + c(-1,1) * qnorm(0.975) * sqrt(lambda/t)
+
+# round the result to 3 decimals place
+round(CI, 3)
+```
+
+We can also using the built in R function to calculate the poison interval CI!
+```{r}
+poisson.test(5, T = 94.32)$conf
+```
+
+You can see the the built in R function gives you a more convervative "coverage". It is wider so it will guarantee you a 95% coverage. The confidence interval becomes wider as the coverage increases, because you want to be sure the interval will contain the parameter.
 
 
 
