@@ -1,0 +1,36 @@
+---
+title: "Peer Assessment 2"
+author: "ishaka"
+date: "18 November 2015"
+output: html_document
+keep_md : true
+---
+
+Unzip file
+```{r}
+compressedFile <-  "repdata-data-StormData.csv.bz2"
+unzipped_file <- "stormdata.csv"
+
+unzip(compressedFile)
+```
+
+
+Read raw data from file
+```{r}
+# read from the file
+rawdata <- read.csv("repdata-data-StormData.csv.bz2")
+
+
+```
+
+
+Processing the data
+```{r}
+# convert to data table for faster processing
+library(data.table)
+rawDT <- data.table(rawdata)
+
+library(dplyr)
+
+```
+
