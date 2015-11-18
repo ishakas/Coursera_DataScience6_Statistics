@@ -1,0 +1,85 @@
+---
+title: "week 3 notes"
+author: "ishaka"
+date: "18 November 2015"
+output: html_document
+keep_md: true
+---
+
+# Introduction to Parameter
+Parameter is to a population as a statistic is to a sample. In statistical inference, parameters are sometimes taken to be unobservable and this case the statistician task is to infer what they can about the parameter based on observations of random samples taken from the population.
+
+Examples:  
+
+* It is impractical to ask every voter before an election so a sample of voter will be polled, and a statistic, the percentage of polled voters who preferred each candidate will be counted. The statistic is then used to make inference about the parameter.
+
+* In some forms of testing of manufactured products, rather than destructively testing all products, only a sample of products are tested, to gather statistics supporting an inference that all the products meet product design parameters.
+
+
+Source: https://en.wikipedia.org/wiki/Statistical_parameter
+
+# Confidence Interval
+## What is Confidence Interval (CI)?
+Confidence Interval (CI) gives an estimated range of values which is likely to include the unknown population parameter. The estimated range being calculated from a given set of sample data.
+
+It's a form of estimating a certain parameter. In the case of CI, a whole interval of values for the parameter is given instead of a single value, together with a *likelihood* that the real (unknown) value of the parameter will be in the interval.
+
+The CI is based on observation from a sample, and hence differs from sample to sample. How frequently the observed interval contains the (unknown) parameter is determined by its **confidence level** and is often described in percentage. The CI is always given together with the confidence level. For example: 95% confidence interval.
+
+The end points of CI are referred as **confidence limits**. The higher the confidence level, the wider the confidence interval will be.
+
+CI consist of a range of values that acts as good estimates of the unknown population parameter; however the interval computed does not necessarily include the true value of the parameter. When we say "we are 99% confident that the true value of the parameter is in our confidence interval", we express 99% of the hypothetically observed confidence intervals will hold value the true value of the parameter.
+
+After any particular sample is taken and its CI is calculated, the true population parameter is either in the realized interval, or not in the realized interval. It is not a matter of chance.
+
+For example:  
+
+* If we randomly choose one realization of confidence interval for a given population mean $\mu$. There is a 95% probability we end up having chosen an interval that contains the parameter. However we may also be unlucky (in the 5%) and have picked the wrong one. We will never know because we are stuck with that interval.
+
+Other sources:  
+- http://www.stat.yale.edu/Courses/1997-98/101/confint.htm  
+- https://www.youtube.com/watch?v=tFWsuO9f74o 
+- https://en.wikipedia.org/wiki/Confidence_interval
+
+
+## Misunderstanding of CI
+A confidence interval with confidence level of 95% (i.e. a 95% confidence interval) **does not** mean there is a 95% probability the population parameter will be in the interval. Nor that there is a 95% probability the interval covers the population parameter. Again, once the interval is realized the true value of the parameter is either going to be in the interval, or not. It is not a matter of chance.
+
+95% CI means that 95% percent of the hypothetical observed intervals will hold the true value of the parameter.
+
+Other misconceptions:  
+
+* A 95% CI does not mean 95% of the sample data lies within the interval. (CI is a measure of the parameter, not distribution of sample)
+
+* A CI is not a range of plausible values for the sample mean. (CI is an estimate of plausible values for the population parameter)  
+
+* A particular 95% CI from an experiment does not mean there is a 95% probability that a sample mean from the repeat experiment will fall in this interval. (again, CI is a measure for parameter not for sample)  
+
+## Calculating CI
+```{r}
+# number of samples
+n <- 6
+
+# population standard deviation
+sigma <- 1.2
+  
+# sample mean (xbar)
+mean <- 101.82
+
+# say we want 95% confidence interval, so we want to add the area before 0.025 and after 0.975
+CI95 <- mean + c(-1,1) * qnorm(0.975) * sigma/sqrt(n)
+
+# what if we want 90% confidence interval?
+CI90 <- mean + c(-1,1) * qnorm(0.95) * sigma/sqrt(n)
+
+CI95
+CI90
+
+```
+
+
+
+# Pooled standard deviation
+Other sources:  
+- https://vimeo.com/68706988  
+- https://www.easycalculation.com/statistics/learn-pooled-variance.php 
