@@ -78,8 +78,112 @@ CI90
 ```
 
 
+# T-Distribution
+Normal distribution works well if you have a large number of samples however it has limitation with small number of samples. An alternative is to use t-distribution.
 
-# Pooled standard deviation
-Other sources:  
-- https://vimeo.com/68706988  
-- https://www.easycalculation.com/statistics/learn-pooled-variance.php 
+The formula for calculating T-distribution interval is 
+$$Estimate \pm TQ \times SE_{Est} $$ 
+
+* $TQ$ is the T-Quantile
+* $SE_{Est}$ is the estimated Standard Error
+
+or alternatively
+
+$$ \bar X \pm \frac{t_{n-1} S}{\sqrt{n}} $$
+
+* $\bar x$ is the sample mean
+* $t_{n-1}$ is the relevant T quantile
+
+Other notes about the t-interval:
+
+* t- interval assumes the data are iid normal
+* it works well if the is roughly symmetric and mound shapped
+* paired observations are analzed using t interval by taking their differences
+* for large degree of freedom (lots of samples) the t quantile value (TQ) becomes the standard normal quantiles (ZQ)
+
+Limitaitons of the t-interval:
+
+* t-interval does not work well if it's skewed distributions
+* for highly discrete data, like binomials, other intervals are available
+
+### Example of using t-interval to find differences between paired variables
+t-intervals can be used to find the confidence interval for the average difference between paired variables
+```{r}
+data(sleep)
+
+#There are multiple ways to calculate the t-interval to find the average diff between paired variables
+# First let's do some pre-processing and statistics
+g1 <- sleep$extra[1 : 10]; g2 <- sleep$extra[11 : 20]
+difference <- g2 - g1
+mn <- mean(difference); s <- sd(difference); n <- 10
+n <- 10 # 10 samples per group
+quantile <- 0.975 # 95% confidence
+
+rbind(
+  mn + c(-1, 1) * qt(.975, n-1) * s / sqrt(n), # Method 1: calculate the interval using the formula
+  as.vector(
+    t.test(difference)$conf.int # Method 2: find the difference between the groups and pass it in to the t.test function
+    ), 
+  as.vector(
+    t.test(g2, g1, paired = TRUE)$conf.int # Method 3: pass the groups diretly to the t.test function, with paired = TRUE
+    ), 
+  as.vector(
+    t.test(extra ~ I(relevel(group, 2)), paired = TRUE, data = sleep)$conf.int #Method 4: the hard way using t.test!
+    ) 
+)
+
+```
+
+As you can see above all the commands will yield the same answer!
+
+### Independent group confidence intervals - equal variance
+What if the groups are not paired and they are independent, and may have different sample size? We cannot use the paired t-test so a different method to find the differences between independent groups.
+
+This method assumes constant variances across the two groups
+
+The $t$ confidence interval for $\mu_y - \mu_x$ is defined as $$\bar Y - \bar X \pm t_{n_x + n_y - 2, 1 - \alpha/2}S_p\left(\frac{1}{n_x} + \frac{1}{n_y}\right)^{1/2}$$
+
+* $t_{n_x + n_y - 2, 1 - \alpha/2}$ = TQ
+* $n_x + n_y - 2$ = degrees of freedom
+* $S_p\left(\frac{1}{n_x} + \frac{1}{n_y}\right)^{1/2}$ = standard error
+* $S_p^2 = \{(n_x - 1) S_x^2 + (n_y - 1) S_y^2\}/(n_x + n_y - 2)$ = pooled variance estimator
+  * this is effectively a weighted average between the two variances, such that different sample sizes are taken in to account
+  * For equal sample sizes, $n_x = n_y$, $S_p^2 = \frac{S_x^2 + S_y^2}{2}$ (average of variance of two groups)
+  
+
+```{r}
+# in R, the TQ can be calculated using 
+quantile <- 0.975 #95% CI
+n_x <- 10 # number of samples in group1
+n_y <- 9 # number of samples in group2
+qt(quantile, df = n_x + n_y - 2)
+
+# similarly the SP (pooled standard deviation) can be calculated using
+sd_x <- 1
+sd_y <- 1
+
+var_x <- sd_x^2
+var_y <- sd_y^2
+sp = sqrt(((n_x-1)*var_x + (n_y-1)*var_y)/(n_x+n_y-2))
+
+# The interval can then be calculated once you have the sp, mean_y and mean_x
+mean_y <- 1
+mean_x <- 0
+CI95 = mean_y - mean_x + c(-1,1) * qt(quantile, df = n_x + n_y -2) * sp * (1/n_x + 1/n_y)^.5
+CI95
+```
+
+
+Other sources for pooled standard deviation:
+
+*https://vimeo.com/68706988  
+*https://www.easycalculation.com/statistics/learn-pooled-variance.php 
+
+### Independent group confidence intervals - unequal variance
+What if the variances between the groups are not the same? You can still use the same formula but the degree of freedom in the T quantile will need to be adjusted based on this following formula
+
+$$df = \frac{\left(S_x^2 / n_x + S_y^2/n_y\right)^2}
+        {\left(\frac{S_x^2}{n_x}\right)^2 / (n_x - 1) +
+        \left(\frac{S_y^2}{n_y}\right)^2 / (n_y - 1)}$$
+        
+* $\left(\frac{s_x^2}{n_x} + \frac{s_y^2}{n_y}\right)^{1/2}$ = standard error
