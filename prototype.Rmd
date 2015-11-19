@@ -16,21 +16,48 @@ unzip(compressedFile)
 
 
 Read raw data from file
-```{r}
+```{r cache=TRUE}
 # read from the file
-rawdata <- read.csv("repdata-data-StormData.csv.bz2")
-
-
+rawdata <- read.csv("repdata-data-StormData.csv")
 ```
 
 
 Processing the data
 ```{r}
-# convert to data table for faster processing
-library(data.table)
-rawDT <- data.table(rawdata)
+# retrieve columns that we are interested in
+tidydata <- rawdata[,c('EVTYPE','FATALITIES','INJURIES', 'CROPDMG', 'PROPDMGEXP', 'CROPDMG', 'CROPDMGEXP')]
+```
 
+```{r}
+# Calculates nominal property damage and store in new column called PROPDMG_NOM
+tidydata$PROPDMG_NOM = 0
+tidydata[tidydata$PROPDMGEXP == "H", ]$PROPDMG_NOM = tidydata[tidydata$PROPDMGEXP == "H", ]$PROPDMG * 10^2
+tidydata[tidydata$PROPDMGEXP == "K", ]$PROPDMG_NOM = tidydata[tidydata$PROPDMGEXP == "K", ]$PROPDMG * 10^3
+tidydata[tidydata$PROPDMGEXP == "M", ]$PROPDMG_NOM = tidydata[tidydata$PROPDMGEXP == "M", ]$PROPDMG * 10^6
+tidydata[tidydata$PROPDMGEXP == "B", ]$PROPDMG_NOM = tidydata[tidydata$PROPDMGEXP == "B", ]$PROPDMG * 10^9
+
+# Calculate nominal crop damage and store ina new column called CROPDMG_NOM
+tidydata$CROPDMG_NOM = 0
+tidydata[tidydata$CROPDMGEXP == "H", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "H", ]$CROPDMG * 10^2
+tidydata[tidydata$CROPDMGEXP == "K", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "K", ]$CROPDMG * 10^3
+tidydata[tidydata$CROPDMGEXP == "M", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "M", ]$CROPDMG * 10^6
+tidydata[tidydata$CROPDMGEXP == "B", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "B", ]$CROPDMG * 10^9
+```
+
+# Result
+Which types of events are most harmful with respect to population health?
+```{r}
+# find total casualties (injuries + fatalities) for each type of event
 library(dplyr)
+tidydata <- mutate(tidydata, TOTAL_CASUALTIES=FATALITIES+INJURIES)
 
+# summarise data by event type
+
+
+# find top 10 events
+top10_rows <- head(order(tidydata$TOTAL_CASUALTIES),10)
+top10_events <- tidydata[top10_rows,]
+
+library(ggplot2)
 ```
 
