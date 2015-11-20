@@ -6,28 +6,26 @@ output: html_document
 keep_md : true
 ---
 
-Unzip file
-```{r}
-compressedFile <-  "repdata-data-StormData.csv.bz2"
-unzipped_file <- "stormdata.csv"
+# Title
 
-unzip(compressedFile)
-```
+# Synopsis
 
+# Data Processing
 
 Read raw data from file
 ```{r cache=TRUE}
 # read from the file
-rawdata <- read.csv("repdata-data-StormData.csv")
+rawdata <- read.csv("repdata-data-StormData.csv.bz2")
 ```
 
 
-Processing the data
+Select columns that are relevant
 ```{r}
 # retrieve columns that we are interested in
-tidydata <- rawdata[,c('EVTYPE','FATALITIES','INJURIES', 'CROPDMG', 'PROPDMGEXP', 'CROPDMG', 'CROPDMGEXP')]
+tidydata <- rawdata[,c('EVTYPE','FATALITIES','INJURIES', 'CROPDMG', 'PROPDMGEXP', 'PROPDMG', 'CROPDMGEXP')]
 ```
 
+Perform additional processing on the selected columns
 ```{r}
 # Calculates nominal property damage and store in new column called PROPDMG_NOM
 tidydata$PROPDMG_NOM = 0
@@ -42,22 +40,63 @@ tidydata[tidydata$CROPDMGEXP == "H", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEX
 tidydata[tidydata$CROPDMGEXP == "K", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "K", ]$CROPDMG * 10^3
 tidydata[tidydata$CROPDMGEXP == "M", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "M", ]$CROPDMG * 10^6
 tidydata[tidydata$CROPDMGEXP == "B", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEXP == "B", ]$CROPDMG * 10^9
+
+# Some of the event types have lower cases, convert them all to upper cases
+tidydata$EVTYPE = toupper(tidydata$EVTYPE)
 ```
 
-# Result
+# Results
 Which types of events are most harmful with respect to population health?
 ```{r}
-# find total casualties (injuries + fatalities) for each type of event
-library(dplyr)
-tidydata <- mutate(tidydata, TOTAL_CASUALTIES=FATALITIES+INJURIES)
-
 # summarise data by event type
+casualtiesByType <- aggregate(cbind(FATALITIES, INJURIES) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
 
+# order by fatalities and get top 10 events
+casualtiesByType <- casualtiesByType[order(casualtiesByType$FATALITIES, decreasing = TRUE),]
+casualtiesByType <- casualtiesByType[1:10,]
 
-# find top 10 events
-top10_rows <- head(order(tidydata$TOTAL_CASUALTIES),10)
-top10_events <- tidydata[top10_rows,]
+# pivot the data so they are in easier format for plotting
+library(reshape)
+meltedCasualties <- melt(casualtiesByType[1:10,])
 
 library(ggplot2)
+qplot(
+  EVTYPE, 
+  value, 
+  data = meltedCasualties,
+  fill = EVTYPE,
+  geom = "bar",
+  stat = "identity", 
+  xlab = "Event Type", 
+  ylab = "Human Lifes", 
+  main = "Events"
+  ) + facet_grid(variable ~ .) + coord_flip()
+```
+
+From the plot above we can see that Tornado is the most damaging event to human life by far. It incurs the highest amount of injuries and fatalities.
+
+What type of event is most damaging to property damage?
+```{r}
+# summarise data by event type
+damageByType <- aggregate(cbind(CROPDMG_NOM, PROPDMG_NOM) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
+
+# order by total damage and get top 10 events
+damageByType <- damageByType[order(damageByType$CROPDMG_NOM + damageByType$PROPDMG_NOM, decreasing = TRUE),]
+damageByType <- damageByType[1:10,]
+
+# format the data so they can be plotted
+meltedDamage <- melt(damageByType[1:10,])
+
+qplot(
+  EVTYPE, 
+  value / 10^9, 
+  data = meltedDamage,
+  fill = EVTYPE,
+  geom = "bar",
+  stat = "identity", 
+  xlab = "Event Type", 
+  ylab = "Damage in billions of dollar", 
+  main = "Events"
+  )  + coord_flip()
 ```
 
