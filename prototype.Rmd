@@ -1,25 +1,30 @@
 ---
-title: "Peer Assessment 2"
-author: "ishaka"
+title: "Weather events with most impact on economy and public health in the United States"
+author: "Aditya Ishak"
 date: "18 November 2015"
 output: html_document
 keep_md : true
 ---
 
-# Title
-
 # Synopsis
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+
+This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States between 1950 and November 2011, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage.
+
+This report will show which types of events are:
+
+1. The most harmful to population health
+2. Have the greatest economic consequences
 
 # Data Processing
 
-Read raw data from file
+Read raw data from file. The data file is available from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2) if you wish to download
 ```{r cache=TRUE}
 # read from the file
 rawdata <- read.csv("repdata-data-StormData.csv.bz2")
 ```
 
-
-Select columns that are relevant
+Only select columns that are relevant for the analysis
 ```{r}
 # retrieve columns that we are interested in
 tidydata <- rawdata[,c('EVTYPE','FATALITIES','INJURIES', 'CROPDMG', 'PROPDMGEXP', 'PROPDMG', 'CROPDMGEXP')]
@@ -45,58 +50,62 @@ tidydata[tidydata$CROPDMGEXP == "B", ]$CROPDMG_NOM = tidydata[tidydata$CROPDMGEX
 tidydata$EVTYPE = toupper(tidydata$EVTYPE)
 ```
 
+Summarize top 5 events with most damage to human health
+```{r}
+# summarise top 5 event causing most fatalities 
+fatalitiesByType <- aggregate(cbind(FATALITIES) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
+fatalitiesByType <- fatalitiesByType[order(fatalitiesByType$FATALITIES, decreasing = TRUE),]
+fatalitiesByType <- fatalitiesByType[1:5,]
+
+# summarise top 5 event causing most injuries
+injuriesByType <- aggregate(cbind(INJURIES) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
+injuriesByType <- injuriesByType[order(injuriesByType$INJURIES, decreasing = TRUE),]
+injuriesByType <- injuriesByType[1:5,]
+```
+
+Summarize top 5 events with most economic damage
+```{r}
+# summarise top 5 events causing most crop damage
+cropDmgByType <- aggregate(cbind(CROPDMG_NOM) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
+cropDmgByType <- cropDmgByType[order(cropDmgByType$CROPDMG_NOM, decreasing = TRUE),]
+cropDmgByType <- cropDmgByType[1:5,]
+
+# summarise top 5 events causing most property damage
+propDmgByType <- aggregate(cbind(PROPDMG_NOM) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
+propDmgByType <- propDmgByType[order(propDmgByType$PROPDMG_NOM, decreasing = TRUE),]
+propDmgByType <- propDmgByType[1:5,]
+```
+
 # Results
-Which types of events are most harmful with respect to population health?
+
+#### Which types of events are most harmful to population health?
+Plot the data
 ```{r}
-# summarise data by event type
-casualtiesByType <- aggregate(cbind(FATALITIES, INJURIES) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
-
-# order by fatalities and get top 10 events
-casualtiesByType <- casualtiesByType[order(casualtiesByType$FATALITIES, decreasing = TRUE),]
-casualtiesByType <- casualtiesByType[1:10,]
-
-# pivot the data so they are in easier format for plotting
-library(reshape)
-meltedCasualties <- melt(casualtiesByType[1:10,])
-
-library(ggplot2)
-qplot(
-  EVTYPE, 
-  value, 
-  data = meltedCasualties,
-  fill = EVTYPE,
-  geom = "bar",
-  stat = "identity", 
-  xlab = "Event Type", 
-  ylab = "Human Lifes", 
-  main = "Events"
-  ) + facet_grid(variable ~ .) + coord_flip()
+par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+par(mar = c(6, 4, 3, 0))
+barplot(fatalitiesByType$FATALITIES, names.arg = fatalitiesByType$EVTYPE, main = "Fatalities", 
+    ylab = "Fatalities", cex.axis = 0.8, cex.names = 0.7, las = 2)
+barplot(injuriesByType$INJURIES, names.arg = injuriesByType$EVTYPE, main = "Injuries", 
+    ylab = "Injuries", cex.axis = 0.8, cex.names = 0.7, las = 2)
+title("Top 5 weather events from 1950-2011 \ncausing fatalities or injuries ", 
+    outer = TRUE)
 ```
 
-From the plot above we can see that Tornado is the most damaging event to human life by far. It incurs the highest amount of injuries and fatalities.
+Tornado is the most damaging event to human life by far. It incurs the highest amount of injuries and fatalities compared to other weather events. Also note that there are a lot more injuries than fatalities across the top five weather events.
 
-What type of event is most damaging to property damage?
+
+
+#### Which types of events have the greatest economic consequence?
+Plot the data
 ```{r}
-# summarise data by event type
-damageByType <- aggregate(cbind(CROPDMG_NOM, PROPDMG_NOM) ~ EVTYPE, tidydata, sum, na.rm=TRUE)
-
-# order by total damage and get top 10 events
-damageByType <- damageByType[order(damageByType$CROPDMG_NOM + damageByType$PROPDMG_NOM, decreasing = TRUE),]
-damageByType <- damageByType[1:10,]
-
-# format the data so they can be plotted
-meltedDamage <- melt(damageByType[1:10,])
-
-qplot(
-  EVTYPE, 
-  value / 10^9, 
-  data = meltedDamage,
-  fill = EVTYPE,
-  geom = "bar",
-  stat = "identity", 
-  xlab = "Event Type", 
-  ylab = "Damage in billions of dollar", 
-  main = "Events"
-  )  + coord_flip()
+par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+par(mar = c(8, 4, 3, 0))
+barplot(propDmgByType$PROPDMG / 10^9, names.arg = propDmgByType$EVTYPE, main = "Property damages", 
+    ylab = "Billions of USD", cex.axis = 0.8, cex.names = 0.7, las = 2)
+barplot(cropDmgByType$CROPDMG / 10^9, names.arg = cropDmgByType$EVTYPE, main = "Crop damages", 
+    ylab = "Billions of USD", cex.axis = 0.8, cex.names = 0.7, las = 2)
+title("Top 5 weather events from 1950 - 2011 \ncausing property or economic damage", 
+    outer = TRUE)
 ```
 
+Flood and hurricane/typhoon causes the greatest economic damage. However drought is the main contributor to crop damage. Also note that the nominal damage incurred on property are far larger than the nominal damage incurred on crops.
