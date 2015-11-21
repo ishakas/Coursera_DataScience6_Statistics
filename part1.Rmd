@@ -1,0 +1,124 @@
+---
+title: "Statistical Inference Project Part 1"
+author: "A.Ishak"
+date: "November 2015"
+keep_md: true
+output: pdf_document
+---
+
+# Overview
+The objective of this project is to investigate the exponential distributions and compare it with the Central Limit Theorem. 
+
+The project performs a thousand simulations of 40 exponential distributions having lambda value of 0.2 across all simulations. The simulated samples are used to illustrate and explain the properties of the mean of 40 exponentials in the following way:
+
+1. Show the sample mean and compare it against the theoretical mean of the distribution
+2. Show the sample variable and compare it against the theoretical variance of the distributions
+3. Show the distribution is approximately normal.
+
+# Simulations
+The simulation is performed in R using the *r rexp(n,lambda)* function with n value of 40 and lambda of 0.2. The mean of the simulated exponential is taken and stored in the *r simMeans* object. We iterate the steps 1000 times resulting in the *r simMeans* list containing 1000 means of the 40 exponentials. 
+```{r}
+set.seed(123456)
+
+lambda = .2
+n = 40
+number_of_simulations = 1000
+
+# get the means for 40 random variables having exponential distributions with a lambda value of .2
+# over 1000 simulations
+simMeans = NULL
+for (i in 1:number_of_simulations) simMeans = c(simMeans, mean(rexp(n,lambda)))
+```
+
+
+# Sample Mean versus Theoretical Mean
+```{r}
+# Calculate sample mean
+sm <- mean(simMeans)
+sm
+
+# Calculate theoretical means
+tm <- 1/lambda
+tm
+```
+As the above results shows, the sample mean of **`r sm`** is very close to the theoretical distribution mean of **`r tm`**. When we plot the histogram of the sample means we can see that the sample mean is very close to the theoretical mean. 
+
+```{r echo=FALSE}
+# draw histogram plot for the means
+hist(simMeans, breaks = 50,  
+     xlab="Sample Means from 1000 Simulations", 
+     main = "Distribution of Sample Means of Exponentials (lambda = 0.2)")
+abline(v = sm, lwd=2, col="red")
+```
+
+# Sample Variance versus Theoretical Variance
+```{r}
+# Calculate sample variance
+sv <- var(simMeans)
+sv
+
+# Calculate theoretical variance
+tv <- (1/lambda)^2/n # n is the number of exponential (40), lambda = 0.2
+tv
+```
+
+Again the sample variance is **`r sv`** and it is relatively close to the theoretical variance for 40 exponentials of **`r tv`**
+
+# Distributions
+Finally if we plot the distribution of the averages (in blue) and overlay it with the normal distribution curve (in red) we can see that the distribution is very similar. The distribution of the averages can be defined as having normal distribution. 
+```{r echo=FALSE}
+# Plot the graph
+hist(simMeans , 
+     freq = FALSE, density=10, col="darkgray", breaks=50, 
+     xlab="Sample Means from 1000 Simulations",
+     main="Distribution of Sample Means vs Normal Distribution")
+lines(density(simMeans), col="blue")
+curve(dnorm(x,mean=tm,sd=sqrt(tv)),min(simMeans-1),max(simMeans), add=TRUE, col="red", lwd=2)
+```
+
+# Appendix
+The full code is available below
+```{r eval=FALSE}
+set.seed(123456)
+
+lambda = .2
+n = 40
+number_of_simulations = 1000
+
+# get the means for 40 random variables having exponential distributions with a lambda value of .2
+# over 1000 simulations
+simMeans = NULL
+for (i in 1:number_of_simulations) simMeans = c(simMeans, mean(rexp(n,lambda)))
+
+# Calculate sample mean
+sm <- mean(simMeans)
+sm
+
+# Calculate theoretical means
+tm <- 1/lambda
+tm
+
+# draw histogram plot for the means
+hist(simMeans, breaks = 50,  
+     xlab="Sample Means from 1000 Simulations", 
+     main = "Distribution of Sample Means of Exponentials (lambda = 0.2)")
+abline(v = sm, lwd=2, col="red")
+
+# Calculate sample variance
+sv <- var(simMeans)
+sv
+
+# Calculate theoretical variance
+tv <- (1/lambda)^2/n # n is the number of exponential (40), lambda = 0.2
+tv
+
+# Plot the graph
+hist(simMeans , 
+     freq = FALSE, density=10, col="darkgray", breaks=50, 
+     xlab="Sample Means from 1000 Simulations",
+     main="Distribution of Sample Means vs Normal Distribution")
+lines(density(simMeans), col="blue")
+curve(dnorm(x,mean=tm,sd=sqrt(tv)),min(simMeans-1),max(simMeans), add=TRUE, col="red", lwd=2)
+
+```
+
