@@ -7,9 +7,7 @@ output: pdf_document
 ---
 
 # Overview
-The objective of this project is to investigate the exponential distributions and compare it with the Central Limit Theorem. 
-
-The project performs a thousand simulations of 40 exponential distributions having lambda value of 0.2 across all simulations. The simulated samples are used to illustrate and explain the properties of the mean of 40 exponentials in the following way:
+The objective of this project is to investigate the exponential distributions and compare it with the Central Limit Theorem. The project performs a thousand simulations of 40 exponential distributions having lambda value of 0.2 across all simulations. The simulated samples are used to illustrate and explain the properties of the mean of 40 exponentials in the following way:
 
 1. Show the sample mean and compare it against the theoretical mean of the distribution
 2. Show the sample variable and compare it against the theoretical variance of the distributions
@@ -19,19 +17,19 @@ The project performs a thousand simulations of 40 exponential distributions havi
 The simulation is performed in R using the *r rexp(n,lambda)* function with n value of 40 and lambda of 0.2. The mean of the simulated exponential is taken and stored in the *r simMeans* object. We iterate the steps 1000 times resulting in the *r simMeans* list containing 1000 means of the 40 exponentials. 
 ```{r}
 set.seed(123456)
-
 lambda = .2
 n = 40
 number_of_simulations = 1000
 
-# get the means for 40 random variables having exponential distributions with a lambda value of .2
-# over 1000 simulations
+# get the means for 40 random variables having exponential distributions 
+# with a lambda value of .2 over 1000 simulations
 simMeans = NULL
 for (i in 1:number_of_simulations) simMeans = c(simMeans, mean(rexp(n,lambda)))
 ```
 
 
 # Sample Mean versus Theoretical Mean
+Compare the theoretical mean of the distributions against the sample mean
 ```{r}
 # Calculate sample mean
 sm <- mean(simMeans)
@@ -45,13 +43,13 @@ As the above results shows, the sample mean of **`r sm`** is very close to the t
 
 ```{r echo=FALSE}
 # draw histogram plot for the means
-hist(simMeans, breaks = 50,  
-     xlab="Sample Means from 1000 Simulations", 
+hist(simMeans, breaks = 50,  xlab="Sample Means from 1000 Simulations", 
      main = "Distribution of Sample Means of Exponentials (lambda = 0.2)")
 abline(v = sm, lwd=2, col="red")
 ```
 
 # Sample Variance versus Theoretical Variance
+Let's compare the variance from the simulated samples against the theoretical variance value.
 ```{r}
 # Calculate sample variance
 sv <- var(simMeans)
@@ -66,15 +64,32 @@ Again the sample variance is **`r sv`** and it is relatively close to the theore
 
 # Distributions
 Finally if we plot the distribution of the averages (in blue) and overlay it with the normal distribution curve (in red) we can see that the distribution is very similar. The distribution of the averages can be defined as having normal distribution. 
+
 ```{r echo=FALSE}
-# Plot the graph
-hist(simMeans , 
-     freq = FALSE, density=10, col="darkgray", breaks=50, 
+# Plot the graphs
+par(mar = c(3,1,1,1), mfrow = c(2,1), oma = c(1,1,1,1))
+
+# Plot the graph fo distribution of mean
+hist(simMeans, freq = FALSE, density=10, col="darkgray", breaks=50, 
      xlab="Sample Means from 1000 Simulations",
      main="Distribution of Sample Means vs Normal Distribution")
 lines(density(simMeans), col="blue")
-curve(dnorm(x,mean=tm,sd=sqrt(tv)),min(simMeans-1),max(simMeans), add=TRUE, col="red", lwd=2)
+curve( dnorm(x ,mean=tm, sd=sqrt(tv)),
+       min(simMeans-1), max(simMeans), 
+       add=TRUE, col="red", lwd=2)
+
+# Plot the graph for distribution of 1000 exponentials
+random_var_exp_distributed = rexp(number_of_simulations, lambda)
+hist(random_var_exp_distributed, freq = FALSE,
+     breaks=50, 
+     col = "darkgray", density = 10,
+     main="Distribution of 1000 Exponentials")
 ```
+
+We can see that the distribution of the averages of 40 exponentials is Gaussian shaped, comparing with a distribution of a large collection of 1000 random exponentials.
+
+The plots above shows that the Central Limit Theorem holds, the distribution of means will follow normal distribution irrespective of the underlying distribution. 
+
 
 # Appendix
 The full code is available below
@@ -85,8 +100,8 @@ lambda = .2
 n = 40
 number_of_simulations = 1000
 
-# get the means for 40 random variables having exponential distributions with a lambda value of .2
-# over 1000 simulations
+# get the means for 40 random variables having exponential distributions with 
+# a lambda value of .2 over 1000 simulations
 simMeans = NULL
 for (i in 1:number_of_simulations) simMeans = c(simMeans, mean(rexp(n,lambda)))
 
@@ -112,13 +127,33 @@ sv
 tv <- (1/lambda)^2/n # n is the number of exponential (40), lambda = 0.2
 tv
 
-# Plot the graph
-hist(simMeans , 
-     freq = FALSE, density=10, col="darkgray", breaks=50, 
+# Plot the graphs
+par(mar = c(3,1,1,1), mfrow = c(2,1), oma = c(1,1,1,1))
+
+# Plot the graph fo distribution of mean
+hist(simMeans, freq = FALSE, density=10, col="darkgray", breaks=50, 
      xlab="Sample Means from 1000 Simulations",
      main="Distribution of Sample Means vs Normal Distribution")
 lines(density(simMeans), col="blue")
-curve(dnorm(x,mean=tm,sd=sqrt(tv)),min(simMeans-1),max(simMeans), add=TRUE, col="red", lwd=2)
+curve( dnorm(x ,mean=tm, sd=sqrt(tv)),
+       min(simMeans-1), max(simMeans), 
+       add=TRUE, col="red", lwd=2)
 
+# Plot the graph for distribution of 1000 exponentials
+random_var_exp_distributed = rexp(number_of_simulations, lambda)
+hist(random_var_exp_distributed, freq = FALSE,
+     breaks=50, 
+     col = "darkgray", density = 10,
+     main="Distribution of 1000 Exponentials")
 ```
 
+
+
+```{r eval=FALSE, echo=FALSE}
+Note: to get KnitPDF working we needed to install additional packages (titling and framed) 
+in addition to the basic MacTex packages 
+
+sudo tlmgr update --self
+sudo tlmgr install framed
+sudo tlmgr install titling
+```

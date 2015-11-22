@@ -1,0 +1,133 @@
+---
+title: "Statistical Inference Project Part 2"
+author: "A.Ishak"
+date: "November 2015"
+keep_md: true
+output: pdf_document
+---
+
+# Synopsis
+In this project we will analyze the ToothGrowth data in the R dataset package to compare tooth growth by types of supplement and dosage level. 
+
+The ToothGrowth data measures the length of odontoblasts (cells responsible for tooth growth) in 60 guinea pigs. Each animal received one of three dose levels of vitamin C (0.5, 1, and 2 mg/day) by one of two delivery methods, orange juice (coded as OJ) or ascorbic acid (a form of vitamin C and coded as VC).
+
+# Exploratory Data Analysis
+Load the ToothGrowth data
+```{r}
+library(datasets)
+data("ToothGrowth")
+```
+
+Perform some exploratory data analysis
+```{r}
+head(ToothGrowth)
+summary(ToothGrowth)
+```
+
+Plot the available ToothGrowht data to obtain some understanding
+```{r}
+library(ggplot2)
+plot <- ggplot(ToothGrowth,aes(x=factor(dose),y=len,fill=factor(dose)))+geom_boxplot()
+plot <- plot+facet_grid(.~supp)+ggtitle("Analyzing ToothGrowth data")
+plot
+```
+
+The box plots seem to indicate that OJ provides superior growth compared to VC for dosage level 0.5mg and 1mg. 
+
+# Calculate 95% Confidence Intervals for Mean Difference Between Supplement Types
+Let's find out the mean difference in teeth growth between VC and OJ, irrespective of dosage level given to the test subjects. For the calculations we will assume the same variance betwen the different groups and they follow t-distribution.
+```{r}
+vc <- subset(ToothGrowth, supp == "VC")
+oj <- subset(ToothGrowth, supp == "OJ")
+
+# get number of samples
+n_oj <- nrow(oj); n_vc <- nrow(vc)
+
+# get means
+mean_vc <- mean(vc$len); 
+mean_oj <- mean(oj$len)
+
+# get variances
+var_vc <- var(vc$len); var_oj <- var(oj$len)
+
+# calculate pooled standard deviation
+sp <- sqrt(((n_vc-1)*var_vc + (n_oj-1)*var_oj)/(n_vc+n_oj-2))
+
+# calculate the 95% confidence interval
+mean_vc - mean_oj + c(-1,1) * qt(0.975, df = n_vc + n_oj -2) * sp * (1/n_vc + 1/n_oj)^.5
+```
+Since the 95% confidence interval contain zero we cannot remove the possibility that there is no difference in tooth growth between using supplement VC or OJ.
+
+# T-Test for Mean Difference by Dosage Level
+We then compare the mean difference between different levels of dosage. Since there are three levels we want to test, the data is subset according to the combination of the dosage pairs.
+```{r}
+# Subset data for comparing dosage level 0.5 vs 1
+dose0.5_1 <- subset(ToothGrowth, dose %in% c(0.5,1))
+
+# Subset data for comparing dosage level 0.5 vs 2
+dose0.5_2 <- subset(ToothGrowth, dose %in% c(0.5,2))
+
+# Subset data for comparing dosage level 1 vs 2
+dose1_2 <- subset(ToothGrowth, dose %in% c(1,2))
+```
+
+Perform t-interval confidence tests between the dosage levels with the null hypothesis that there will be no difference in mean level between the dosage levels.
+
+Test 1: t-test to compare mean difference between dosage levels 0.5mg and 1mg
+```{r}
+t.test(len ~ dose, data=dose0.5_1)
+```
+
+Test 2: t-test to compare mean difference between dosage levels 0.5mg and 2mg
+```{r}
+t.test(len ~ dose, data=dose0.5_2)
+```
+
+Test 3: t-test to compare mean difference between dosage levels 1mg and 2mg
+```{r}
+t.test(len ~ dose, data=dose1_2)
+```
+
+We reject the null hypothesis for all three tests since the confidence intervals for all tests are between negative numbers and do not contain zero. The very small p-value also indicates very strong evidence that we can reject the null hypothesis. In other words, increasing the dosage level will results in higher tooth growth.
+
+# Test for Mean Difference between Supplement Type
+Investigate if there is difference between the types of supplements (OJ vs. VC) for each dosage level. First we must subset the data by the dosage levels.
+```{r}
+# Subset data for dosage level 0.5
+dose0.5 <- subset(ToothGrowth, dose == 0.5)
+
+# Subset data for dosage level 1
+dose1 <- subset(ToothGrowth, dose == 1)
+
+# Subset data for dosage level 2
+dose2 <- subset(ToothGrowth, dose == 2)
+```
+
+Perform t-test between different supplement types for dosage level 0.5mg with the null hypothesis that there will be no difference between the types of supplement.
+```{r}
+t.test(len ~ supp, data = dose0.5)
+```
+
+Perform t-test between different supplement types for dosage level 1mg
+```{r}
+t.test(len ~ supp, data = dose1)
+```
+
+Perform t-test between different supplement types for dosage level 2mg
+```{r}
+t.test(len ~ supp, data = dose2)
+```
+
+We reject the null hypothesis for dosage level 0.5mg and 1mg since the confidence intervals for both tests do not contain zero. The very small p-values for both tests also supports the evidence that we can reject the null hypothesis. The tests indicate that there is a difference to tooth growth when taking a particular supplement; OJ provides greater effect to tooth growth for dosage levels 0.5mg and 1mg.
+
+For dosage level 2mg, the confidence interval contains zero so we cannot reject the null hypothesis that the mean difference is zero. The very high p-value of 0.96 also supports the evidence that we cannot reject the null hypothesis.
+
+# Assumptions
+1. We assume that the experiment was done on independent, random samples and the same measurement control was performed across all groups.
+2. We assume that the t-distribution variance across the two groups are equal.
+
+# Conclusions
+1. When we compare supplements OJ and VC across all dosage levels, there is insufficient evidence that one particular supplement will have greater effect on tooth growth.
+2. However when the comparison is performed by dosage level, supplement OJ results in greater effect for tooth growth on dosage level 0.5mg and 1mg. 
+3. There is no difference to tooth growth on dosage level 2mg between the supplements.
+4. Higher dosage level will results in greater effect to tooth growth.
